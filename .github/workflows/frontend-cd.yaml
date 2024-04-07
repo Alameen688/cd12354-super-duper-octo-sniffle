@@ -12,6 +12,9 @@ jobs:
   lint-test-deploy:
     name: 'Lint, Test and Build'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     defaults:
       run:
         working-directory: ${{ env.working-dir }}

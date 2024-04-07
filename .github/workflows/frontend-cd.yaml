@@ -80,15 +80,15 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: 'setup/terraform'
       
+      - name: Terraform Destroy
+        continue-on-error: true
+        run:  terraform plan -destroy
+        working-directory: 'setup/terraform'
+
       - name: Update Kubernetes manifests with new image tag
         run: |
           cd ${{ env.working-dir }}/k8s
           aws eks update-kubeconfig --name $(terraform output cluster_name) --region us-east-1
           kustomize edit set image frontend=$(terraform output frontend_ecr):${GITHUB_SHA}
           kustomize build | kubectl apply -f -
-
-      - name: Terraform Destroy
-        continue-on-error: true
-        run:  terraform plan -destroy
-        working-directory: 'setup/terraform'
   # terraform:

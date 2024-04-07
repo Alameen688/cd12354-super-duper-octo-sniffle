@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip' # caching pip dependencies
+          cache: 'pipenv' # caching pip dependencies
       - name: Install dependencies
         run: pipenv install
       - name: Run lint
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip' # caching pip dependencies
+          cache: 'pipenv' # caching pip dependencies
       - name: Install dependencies
         run: pipenv install
       - name: Run test
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip' # caching pip dependencies
+          cache: 'pipenv' # caching pip dependencies
       - name: Install dependencies
         run: pipenv install
       - name: Run docker build

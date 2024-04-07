@@ -33,13 +33,6 @@ jobs:
         run: npm test
       - name: Run docker build
         run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=mp-frontend:$GITHUB_SHA .
-      # - name: Deploy to Kubernetes
-      #   uses: azure/k8s-deploy@v4
-      #   with:
-      #     manifests: |
-      #       k8s/deployment.yaml
-      #       k8s/service.yaml
-      #     namespace: 'my-app'
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -53,18 +46,27 @@ jobs:
 
       - name: Terraform Initialize
         run: terraform init
+        working-directory: 'setup/terraform'
 
       - name: Terraform Validate
         run: terraform validate 
+        working-directory: 'setup/terraform'
 
       - name: Terraform Plan
         run: terraform plan 
         continue-on-error: true
+        working-directory: 'setup/terraform'
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: 'setup/terraform'
 
+      # - name: Deploy to Kubernetes
+      #   uses: azure/k8s-deploy@v4
+      #   with:
+      #     manifests: |
+      #       k8s/kustomization.yml
+      #     namespace: 'my-app'
       - name: Terraform Destroy
         run:  terraform plan -destroy
         working-directory: 'setup/terraform'

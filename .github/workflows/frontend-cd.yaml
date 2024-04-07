@@ -40,6 +40,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
           aws-region: us-east-1
+          role-to-assume: arn:aws:iam::811968594092:user/github-action-user
+
+      - name: Kube Auth
+        run: |
+          cd setup
+          ./init.sh
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -61,11 +67,13 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: 'setup/terraform'
-
-      - name: Kube Auth
+      
+      - name: Update Kubernetes manifests with new image tag
         run: |
-          cd setup
-          ./init.sh
+          cd ${{ env.working-dir }}/k8s
+          aws eks update-kubeconfig --name $(terraform output cluster_name) --region us-east-1
+          kustomize edit set image frontend=$(terraform output frontend_ecr):${GITHUB_SHA}
+          kustomize build | kubectl apply -f -
 
       # - name: Deploy to Kubernetes
       #   uses: azure/k8s-deploy@v4

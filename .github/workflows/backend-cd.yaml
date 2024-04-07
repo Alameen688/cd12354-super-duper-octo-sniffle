@@ -1,0 +1,97 @@
+name: 'Backend CD pipeline'
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'starter/backend/**'
+    branches:
+      - main
+env:
+  working-dir: 'starter/backend'
+jobs:
+  lint-test-deploy:
+    name: 'Lint, Test and Build'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ env.working-dir }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python and cache
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pipenv'
+      - name: Install pipenv
+        run: |
+          python -m pip install --upgrade pip
+          pip install pipenv
+      - name: Install dependencies
+        run: pipenv install --dev
+      - name: Run lint
+        run: pipenv run lint
+      - name: Run test
+        run: pipenv run test
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
+          aws-region: us-east-1
+      # - name: Deploy to Kubernetes
+      #   uses: azure/k8s-deploy@v4
+      #   # working-directory: ${{ env.working-dir }}/k8s
+      #   with:
+      #     manifests: |
+      #       k8s/kustomization.yml
+      #     namespace: 'my-app'
+      # - name:  Set Kube
+      #   run: aws eks update-kubeconfig
+
+      # - name: Kube Auth
+      #   run: ./init.sh
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+            terraform_version: "1.3.9"
+      - name: Terraform Initialize
+        run: terraform init
+        working-directory: 'setup/terraform'
+
+      - name: Terraform Validate
+        run: terraform validate 
+        working-directory: 'setup/terraform'
+
+      - name: Terraform Plan
+        run: |
+          export TF_LOG=DEBUG
+          terraform plan
+        continue-on-error: true
+        working-directory: 'setup/terraform'
+
+      - name: Terraform Apply
+        continue-on-error: true
+        run: terraform apply -auto-approve
+        working-directory: 'setup/terraform'
+      
+      - name: Terraform Plan Destroy
+        run:  terraform plan -destroy
+        working-directory: 'setup/terraform'
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+        working-directory: 'setup/terraform'
+
+      # - name: Update Kubernetes manifests with new image tag
+      #   run: |
+      #     cd ${{ env.working-dir }}/k8s
+      #     aws eks update-kubeconfig --name $(terraform output cluster_name) --region us-east-1
+      #     kustomize edit set image backend=$(terraform output backend_ecr):${GITHUB_SHA}
+      #     kustomize build | kubectl apply -f -

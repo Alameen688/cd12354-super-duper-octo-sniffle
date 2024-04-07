@@ -46,8 +46,17 @@ jobs:
           # role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           # role-session-name: githubci-${{ github.sha }}
 
+      - name: Deploy to Kubernetes
+        uses: azure/k8s-deploy@v4
+        # working-directory: ${{ env.working-dir }}/k8s
+        with:
+          manifests: |
+            k8s/kustomization.yml
+      #     namespace: 'my-app'
+      - name:  Set Kube
+        run: aws eks update-kubeconfig
+
       - name: Kube Auth
-        working-directory: 'setup'
         run: ./init.sh
 
       - name: Setup Terraform
@@ -78,12 +87,6 @@ jobs:
           kustomize edit set image frontend=$(terraform output frontend_ecr):${GITHUB_SHA}
           kustomize build | kubectl apply -f -
 
-      # - name: Deploy to Kubernetes
-      #   uses: azure/k8s-deploy@v4
-      #   with:
-      #     manifests: |
-      #       k8s/kustomization.yml
-      #     namespace: 'my-app'
       - name: Terraform Destroy
         run:  terraform plan -destroy
         working-directory: 'setup/terraform'

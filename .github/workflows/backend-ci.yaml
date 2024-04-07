@@ -1,0 +1,69 @@
+name: 'Backend CI pipeline'
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'starter/backend/**'
+    branches:
+      - main
+env:
+  working-dir: 'starter/backend'
+jobs:
+  lint:
+    name: 'Lint'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.working-dir }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # caching pip dependencies
+      - name: Install dependencies
+        run: pipenv install
+      - name: Run lint
+        run: pipenv run test
+
+  test:
+    name: 'Test'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.working-dir }} 
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # caching pip dependencies
+      - name: Install dependencies
+        run: pipenv install
+      - name: Run test
+        run: pipenv run test
+
+  build:
+    name: 'Build'
+    needs: ['lint', 'test']
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.working-dir }} 
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip' # caching pip dependencies
+      - name: Install dependencies
+        run: pipenv install
+      - name: Run docker build
+        run: docker build --tag mp-backend:latest .
+

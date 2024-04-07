@@ -74,7 +74,7 @@ jobs:
       - name: Terraform Plan
         run: |
           export TF_LOG=DEBUG
-          terraform plan -out
+          terraform plan
         continue-on-error: true
         working-directory: 'setup/terraform'
 

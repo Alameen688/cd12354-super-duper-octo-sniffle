@@ -33,31 +33,38 @@ jobs:
         run: npm test
       - name: Run docker build
         run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=mp-frontend:$GITHUB_SHA .
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v2
+      # - name: Deploy to Kubernetes
+      #   uses: azure/k8s-deploy@v4
       #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
-      #     aws-region: us-east-1
+      #     manifests: |
+      #       k8s/deployment.yaml
+      #       k8s/service.yaml
+      #     namespace: 'my-app'
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
+          aws-region: us-east-1
 
-      # - name: Setup Terraform
-      #   uses: hashicorp/setup-terraform@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-      # - name: Terraform Initialize
-      #   run: terraform init
+      - name: Terraform Initialize
+        run: terraform init
 
-      # - name: Terraform Validate
-      #   run: terraform validate 
+      - name: Terraform Validate
+        run: terraform validate 
 
-      # - name: Terraform Plan
-      #   run: terraform plan 
-      #   continue-on-error: true
+      - name: Terraform Plan
+        run: terraform plan 
+        continue-on-error: true
 
-      # - name: Terraform Apply
-      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   run: terraform apply -auto-approve
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve
 
-      # - name: Terraform Destroy
-      #   run:  terraform plan -destroy
+      - name: Terraform Destroy
+        run:  terraform plan -destroy
   # terraform:

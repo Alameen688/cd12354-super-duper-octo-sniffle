@@ -1,7 +1,7 @@
 name: 'Frontend CD pipeline'
 on:
   workflow_dispatch:
-  pull_request:
+  push:
     branches:
       - main
 env:
@@ -27,47 +27,8 @@ jobs:
         run: npm ci
       - name: Run lint
         run: npm run lint
-
-  test:
-    name: 'Test'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ env.working-dir }} 
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Use Node.js 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: '${{ env.working-dir }}/package-lock.json'
-      - name: Install dependencies
-        run: npm ci
       - name: Run test
         run: npm test --passWithNoTests
-
-  build:
-    name: 'Build'
-    needs: ['lint', 'test']
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ env.working-dir }} 
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Use Node.js 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: '${{ env.working-dir }}/package-lock.json'
-      - name: Install dependencies
-        run: npm ci
       - name: Run build
         run: npm build
       # - name: Configure AWS credentials

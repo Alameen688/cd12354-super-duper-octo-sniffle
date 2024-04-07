@@ -4,25 +4,30 @@ on:
   pull_request:
     branches:
       - main
+env:
+  working-dir: 'starter/frontend'
 jobs:
   build-test:
-    name: 'Terraform'
+    name: 'Build, validate and test'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.working-dir }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Use Node.js 
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # cache: 'npm'
+          cache-dependency-path: '${{ env.working-dir }}/package-lock.json'
       - name: Install dependencies
         run: npm ci
       - name: Run lint
         run: npm run lint 
       - name: Run test
-        run: npm test    
+        run: npm test
       # - name: Configure AWS credentials
       #   uses: aws-actions/configure-aws-credentials@v2
       #   with:
@@ -50,3 +55,4 @@ jobs:
 
       # - name: Terraform Destroy
       #   run:  terraform plan -destroy
+  # terraform:

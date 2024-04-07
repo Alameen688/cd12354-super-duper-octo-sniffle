@@ -30,8 +30,6 @@ jobs:
           pip install pipenv
       - name: Install dependencies
         run: pipenv install --dev
-      - name: Activate virtual environment
-        run: pipenv shell
       - name: Run lint
         run: pipenv run lint
 

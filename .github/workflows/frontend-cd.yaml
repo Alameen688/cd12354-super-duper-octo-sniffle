@@ -62,9 +62,10 @@ jobs:
         continue-on-error: true
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve
+        working-directory: 'setup/terraform'
 
       - name: Terraform Destroy
         run:  terraform plan -destroy
+        working-directory: 'setup/terraform'
   # terraform:

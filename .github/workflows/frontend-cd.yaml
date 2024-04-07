@@ -47,7 +47,7 @@ jobs:
           # role-session-name: githubci-${{ github.sha }}
 
       - name: Kube Auth
-        working-dir: 'setup'
+        working-directory: 'setup'
         run: ./init.sh
 
       - name: Setup Terraform

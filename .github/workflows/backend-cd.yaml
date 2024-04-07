@@ -70,15 +70,15 @@ jobs:
         working-directory: 'setup/terraform'
 
       - name: Terraform Plan
-        run: |
-          export TF_LOG=DEBUG
-          terraform plan
+        run: terraform plan
         continue-on-error: true
         working-directory: 'setup/terraform'
 
       - name: Terraform Apply
         continue-on-error: true
-        run: terraform apply -auto-approve
+        run: |
+          export TF_LOG=DEBUG
+          terraform apply -auto-approve
         working-directory: 'setup/terraform'
       
       - name: Terraform Plan Destroy

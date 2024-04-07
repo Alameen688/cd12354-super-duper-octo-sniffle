@@ -47,9 +47,8 @@ jobs:
           # role-session-name: githubci-${{ github.sha }}
 
       - name: Kube Auth
-        run: |
-          cd setup
-          ./init.sh
+        working-dir: 'setup'
+        run: ./init.sh
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

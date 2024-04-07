@@ -83,8 +83,12 @@ jobs:
         run: terraform apply -auto-approve
         working-directory: 'setup/terraform'
       
-      - name: Terraform Destroy
+      - name: Terraform Plan Destroy
         run:  terraform plan -destroy
+        working-directory: 'setup/terraform'
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
         working-directory: 'setup/terraform'
 
       # - name: Update Kubernetes manifests with new image tag

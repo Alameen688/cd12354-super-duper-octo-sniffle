@@ -2,6 +2,8 @@ name: 'Frontend CI pipeline'
 on:
   workflow_dispatch:
   pull_request:
+    paths:
+      - 'starter/frontend/**'
     branches:
       - main
 env:

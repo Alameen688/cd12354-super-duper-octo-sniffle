@@ -73,11 +73,9 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan
-        continue-on-error: true
         working-directory: 'setup/terraform'
 
       - name: Terraform Apply
-        continue-on-error: true
         run: |
           export TF_LOG=DEBUG
           terraform apply -auto-approve

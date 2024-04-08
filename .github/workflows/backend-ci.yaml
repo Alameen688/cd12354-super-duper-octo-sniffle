@@ -83,10 +83,15 @@ jobs:
         run: pipenv install --dev
       - name: Run docker build
         run: docker build --tag mp-backend:latest .
-      - name: Comment success on PR
+      - name: Add Pipeline success comment to PR
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           message: |
-            🚀 Pipeline ran sucessfully
-
+            :white_check_mark: Backend pipeline ran sucessfully
+      - name: Add Pipeline failure comment to PR
+        if: ${{ failure() && github.event_name == 'pull_request' }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            :x: Backend pipeline failed

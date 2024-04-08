@@ -53,6 +53,8 @@ jobs:
 
   build:
     name: 'Build'
+    permissions:
+      pull-requests: write
     needs: ['lint', 'test']
     runs-on: ubuntu-latest
     defaults:
@@ -72,4 +74,15 @@ jobs:
         run: npm ci
       - name: Run docker build
         run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=mp-frontend:latest .
-
+      - name: Add Pipeline success comment to PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            :white_check_mark: Frontend pipeline ran sucessfully
+      - name: Add Pipeline failure comment to PR
+        if: ${{ failure() && github.event_name == 'pull_request' }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            :x: Frontend pipeline failed

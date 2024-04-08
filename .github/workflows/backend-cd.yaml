@@ -73,7 +73,7 @@ jobs:
       - name: Deploy to EKS
         uses: kodermax/kubectl-aws-eks@main
         with:
-          args: set image backend=${{ env.backend_ecr }}:$GITHUB_SHA
+          args: set image k8s/backend $ECR_REGISTRY/$ECR_REPOSITORY:$GITHUB_SHA
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA}}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}

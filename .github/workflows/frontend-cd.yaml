@@ -97,6 +97,7 @@ jobs:
       - name: Destroy Terraform resources
         if: ${{ failure() }}
         run: terraform destroy -auto-approve
+        working-directory: 'setup/terraform'
 
       # - name: Deploy to EKS with Kustomize
       #   run: |

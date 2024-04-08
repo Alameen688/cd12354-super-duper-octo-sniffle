@@ -53,8 +53,11 @@ jobs:
       - name: Tag Docker image
         run: |
           docker tag frontend:$GITHUB_SHA ${{ env.frontend_ecr }}:$GITHUB_SHA
-      - name: Login to ECR
-        run: aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin ${{ env.frontend_ecr }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      # - name: Login to ECR
+      #   run: aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin ${{ env.frontend_ecr }}
       - name: Push Docker image to ECR
         run: docker push ${{ env.frontend_ecr }}:$GITHUB_SHA
       - name: Deploy to EKS

@@ -49,7 +49,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-            terraform_version: "1.3.9"
+            terraform_version: "1.4.5"
       - name: Terraform Initialize
         run: terraform init
         working-directory: 'setup/terraform'
@@ -81,7 +81,7 @@ jobs:
       - name: Tag Docker image
         run: |
           docker tag backend:$GITHUB_SHA $backend_ecr:$GITHUB_SHA
-      - name: Login to Registry
+      - name: Login to ECR
         run: aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin $backend_ecr
       - name: Push Docker image to ECR
         run: docker push $backend_ecr:$GITHUB_SHA

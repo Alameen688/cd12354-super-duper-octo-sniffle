@@ -7,8 +7,10 @@ on:
     branches:
       - main
 env:
-  working-dir: 'starter/backend'
-  region: 'us-east-1'
+  working_dir: 'starter/backend'
+  region: ${{secrets.AWS_REGION}}
+  cluster_name: ${{ secrets.CLUSTER_NAME }}
+  backend_ecr: ${{ secrets.BACKEND_ECR }}
 jobs:
   lint-test-deploy:
     name: 'Lint, Test and Build'
@@ -18,7 +20,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: ${{ env.working-dir }}
+        working-directory: ${{ env.working_dir }}
 
     steps:
       - name: Checkout
@@ -44,34 +46,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
-          aws-region: ${{ env.region }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-            terraform_version: "1.4.5"
-      - name: Terraform Initialize
-        run: terraform init
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Validate
-        run: terraform validate 
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Plan
-        run: terraform plan
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Apply
-        run: |
-          export TF_LOG=DEBUG
-          terraform apply -auto-approve
-        working-directory: 'setup/terraform'
-      - name: Set Terraform Outputs to ENV
-        run: |
-          echo "cluster_name=$(terraform output -raw cluster_name)" >> $GITHUB_ENV
-          echo "backend_ecr=$(terraform output -raw backend_ecr)" >> $GITHUB_ENV
-        working-directory: 'setup/terraform'
+          aws-region: $region
 
       - name: Setup kubectl 
         uses: azure/setup-kubectl@v3
@@ -82,18 +57,12 @@ jobs:
         run: |
           docker tag backend:$GITHUB_SHA $backend_ecr:$GITHUB_SHA
       - name: Login to ECR
-        run: aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin $backend_ecr
+        run: aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $backend_ecr
       - name: Push Docker image to ECR
         run: docker push $backend_ecr:$GITHUB_SHA
       - name: Deploy to EKS
         run: |
           cd k8s/
-          aws eks update-kubeconfig --name $cluster_name --region ${{ env.region }}
+          aws eks update-kubeconfig --name $cluster_name --region $region
           kustomize edit set image backend=$backend_ecr:$GITHUB_SHA
           kustomize build | kubectl apply -f -
-      # - name: Kube Auth
-      #   run: ./init.sh
-      - name: Destroy Terraform resources
-        if: ${{ failure() }}
-        run: terraform destroy -auto-approve
-        working-directory: 'setup/terraform'

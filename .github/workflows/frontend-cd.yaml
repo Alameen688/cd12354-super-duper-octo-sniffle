@@ -66,9 +66,14 @@ jobs:
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 811968594092.dkr.ecr.us-east-1.amazonaws.com
           docker push 811968594092.dkr.ecr.us-east-1.amazonaws.com/registry-exercise:$GITHUB_SHA
 
-      - name: Deploy to EKS
+      # - name: Deploy to EKS
+      #   run: |
+      #     kubectl apply -f k8s/
+
+      - name: Deploy to EKS with Kustomize
         run: |
-          kubectl apply -f k8s/
+          cd k8s/
+          kustomize build | kubectl apply -f -
 
       # - name: Kube Auth
       #   run: ./init.sh

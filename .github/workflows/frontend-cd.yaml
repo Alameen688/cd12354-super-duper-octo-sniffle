@@ -8,6 +8,7 @@ on:
       - main
 env:
   working-dir: 'starter/frontend'
+  region: 'us-east-1'
 jobs:
   lint-test-deploy:
     name: 'Lint, Test and Build'
@@ -34,18 +35,20 @@ jobs:
         run: npm run lint
       - name: Run test
         run: npm test
-      # - name: Run docker build
-      #   run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=mp-frontend:$GITHUB_SHA .
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
-          aws-region: us-east-1
+          aws-region: ${{ env.region }}
           # role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           # role-session-name: githubci-${{ github.sha }}
 
+      - name: Setup kubectl 
+        uses: azure/setup-kubectl@v3
+        # with:
+        #   version: '<version>' # default is latest stable
       # - name: Deploy to Kubernetes
       #   uses: azure/k8s-deploy@v4
       #   # working-directory: ${{ env.working-dir }}/k8s
@@ -53,41 +56,22 @@ jobs:
       #     manifests: |
       #       k8s/kustomization.yml
       #     namespace: 'my-app'
-      # - name:  Set Kube
-      #   run: aws eks update-kubeconfig
+      - name: Run docker build
+        run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=registry-exercise:$GITHUB_SHA .
+      - name: Tag Docker image
+        run: |
+          docker tag registry-exercise:$GITHUB_SHA 811968594092.dkr.ecr.us-east-1.amazonaws.com/registry-exercise:$GITHUB_SHA
+      - name: Push Docker image to ECR
+        run: |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 811968594092.dkr.ecr.us-east-1.amazonaws.com
+          docker push 811968594092.dkr.ecr.us-east-1.amazonaws.com/registry-exercise:$GITHUB_SHA
+
+      - name: Deploy to EKS
+        run: |
+          kubectl apply -f k8s/
 
       # - name: Kube Auth
       #   run: ./init.sh
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-            terraform_version: "1.3.9"
-      - name: Terraform Initialize
-        run: terraform init
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Validate
-        run: terraform validate 
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Plan
-        run: terraform plan
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Apply
-        run: |
-          export TF_LOG=DEBUG
-          terraform apply -auto-approve
-        working-directory: 'setup/terraform'
-      
-      - name: Terraform Plan Destroy
-        run:  terraform plan -destroy
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
-        working-directory: 'setup/terraform'
 
       # - name: Update Kubernetes manifests with new image tag
       #   run: |

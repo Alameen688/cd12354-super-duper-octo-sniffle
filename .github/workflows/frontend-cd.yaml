@@ -83,16 +83,25 @@ jobs:
         run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=frontend:$GITHUB_SHA .
       - name: Tag Docker image
         run: |
-          docker tag frontend:$GITHUB_SHA $(terraform output frontend_ecr):$GITHUB_SHA
+          target=$(terraform output frontend_ecr)
+          echo $target
+          docker tag frontend:$GITHUB_SHA $target:$GITHUB_SHA
+      - name: Login to Registry
+        run: aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin $(terraform output frontend_ecr)
       - name: Push Docker image to ECR
         run: |
-          aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin $(terraform output frontend_ecr)
-          docker push $(terraform output frontend_ecr):$GITHUB_SHA
-
+          target=$(terraform output frontend_ecr)
+          echo $target
+          docker push $target:$GITHUB_SHA
       - name: Deploy to EKS
         run: |
           cd k8s/
-          aws eks update-kubeconfig --name $(terraform output cluster_name) --region ${{ env.region }}
+          target=$(terraform output frontend_ecr)
+          cluster_name=$(terraform output cluster_name)
+          echo $target
+          echo $cluster_name
+          aws eks update-kubeconfig --name $cluster_name --region ${{ env.region }}
+          kustomize edit set image frontend=$target:$GITHUB_SHA
           kubectl apply -f -
 
       - name: Destroy Terraform resources
@@ -104,7 +113,7 @@ jobs:
       #   run: |
       #     cd k8s/
       #     aws eks update-kubeconfig --name $(terraform output cluster_name) --region ${{ env.region }}
-      #     kustomize edit set image frontend=$(terraform output frontend_ecr):${GITHUB_SHA}
+      #     kustomize edit set image frontend=$(terraform output frontend_ecr):$GITHUB_SHA
       #     kustomize build | kubectl apply -f -
 
       # - name: Kube Auth
@@ -114,6 +123,6 @@ jobs:
       #   run: |
       #     cd ${{ env.working-dir }}/k8s
       #     aws eks update-kubeconfig --name $(terraform output cluster_name) --region ${{ env.region }}
-      #     kustomize edit set image frontend=$(terraform output frontend_ecr):${GITHUB_SHA}
+      #     kustomize edit set image frontend=$(terraform output frontend_ecr):$GITHUB_SHA
       #     kustomize build | kubectl apply -f -
   # terraform:

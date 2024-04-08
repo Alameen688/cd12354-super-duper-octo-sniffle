@@ -102,7 +102,7 @@ jobs:
           echo $cluster_name
           aws eks update-kubeconfig --name $cluster_name --region ${{ env.region }}
           kustomize edit set image frontend=$target:$GITHUB_SHA
-          kubectl apply -f -
+          kustomize build | kubectl apply -f -
 
       - name: Destroy Terraform resources
         if: ${{ failure() }}

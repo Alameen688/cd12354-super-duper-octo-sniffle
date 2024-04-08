@@ -12,6 +12,7 @@ env:
   cluster_name: ${{ secrets.CLUSTER_NAME }}
   frontend_ecr: ${{ secrets.FRONTEND_ECR }}
   kubectl_version: 'v1.29.3'
+  IMAGE_TAG: ${GITHUB_SHA::7}
 jobs:
   lint-test-deploy:
     name: 'Lint, Test and Build'
@@ -49,20 +50,20 @@ jobs:
         with:
           version: ${{ env.kubectl_version }}
       - name: Run docker build
-        run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=frontend:$GITHUB_SHA .
+        run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=frontend:${{ env.IMAGE_TAG }} .
       - name: Tag Docker image
         run: |
-          docker tag frontend:$GITHUB_SHA ${{ env.frontend_ecr }}:$GITHUB_SHA
+          docker tag frontend:${{ env.IMAGE_TAG }} ${{ env.frontend_ecr }}:${{ env.IMAGE_TAG }}
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       # - name: Login to ECR
       #   run: aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin ${{ env.frontend_ecr }}
       - name: Push Docker image to ECR
-        run: docker push ${{ env.frontend_ecr }}:$GITHUB_SHA
+        run: docker push ${{ env.frontend_ecr }}:${{ env.IMAGE_TAG }}
       - name: Deploy to EKS
         run: |
           cd k8s/
           aws eks update-kubeconfig --name ${{ env.cluster_name}} --region ${{ env.region }}
-          kustomize edit set image frontend=${{ env.frontend_ecr }}:$GITHUB_SHA
+          kustomize edit set image frontend=${{ env.frontend_ecr }}:${{ env.IMAGE_TAG }}
           kustomize build | kubectl apply -f -

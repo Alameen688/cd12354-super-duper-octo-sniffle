@@ -11,6 +11,7 @@ env:
   region: ${{secrets.AWS_REGION}}
   cluster_name: ${{ secrets.CLUSTER_NAME }}
   frontend_ecr: ${{ secrets.FRONTEND_ECR }}
+  kubectl_version: 'v1.29.3'
 jobs:
   lint-test-deploy:
     name: 'Lint, Test and Build'
@@ -45,15 +46,8 @@ jobs:
           aws-region: ${{ env.region }}
       - name: Setup kubectl 
         uses: azure/setup-kubectl@v3
-        # with:
-        #   version: '<version>' # default is latest stable
-      # - name: Deploy to Kubernetes
-      #   uses: azure/k8s-deploy@v4
-      #   # working-directory: ${{ env.working_dir }}/k8s
-      #   with:
-      #     manifests: |
-      #       k8s/kustomization.yml
-      #     namespace: 'my-app'
+        with:
+          version: ${{ env.kubectl_version }}
       - name: Run docker build
         run: docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=frontend:$GITHUB_SHA .
       - name: Tag Docker image

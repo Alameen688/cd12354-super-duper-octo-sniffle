@@ -46,7 +46,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
-          aws-region: $region
+          aws-region: ${{ env.region }}
 
       - name: Setup kubectl 
         uses: azure/setup-kubectl@v3
@@ -55,14 +55,25 @@ jobs:
         run: docker build --tag=backend:$GITHUB_SHA .
       - name: Tag Docker image
         run: |
-          docker tag backend:$GITHUB_SHA $backend_ecr:$GITHUB_SHA
-      - name: Login to ECR
-        run: aws ecr get-login-password --region $region | docker login --username AWS --password-stdin $backend_ecr
+          docker tag backend:$GITHUB_SHA ${{ env.backend_ecr }}:$GITHUB_SHA
+      # - name: Login to ECR
+      #   run: aws ecr get-login-password --region ${{ env.region }} | docker login --username AWS --password-stdin ${{ env.backend_ecr }}
+       - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
       - name: Push Docker image to ECR
-        run: docker push $backend_ecr:$GITHUB_SHA
+        run: docker push ${{ env.backend_ecr }}:$GITHUB_SHA
+      - name: deploy to cluster
+        uses: kodermax/kubectl-aws-eks@main
+        working-directory: '${{ env.working_dir }}/k8s'
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.backend_ecr }}
+          IMAGE_TAG: $GITHUB_SHA
       - name: Deploy to EKS
         run: |
           cd k8s/
-          aws eks update-kubeconfig --name $cluster_name --region $region
-          kustomize edit set image backend=$backend_ecr:$GITHUB_SHA
+          aws eks update-kubeconfig --name ${{ env.cluster_name }} --region ${{ env.region }}
+          kustomize edit set image backend=${{ env.backend_ecr }}:$GITHUB_SHA
           kustomize build | kubectl apply -f -

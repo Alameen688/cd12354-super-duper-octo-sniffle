@@ -63,20 +63,20 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       - name: Push Docker image to ECR
         run: docker push ${{ env.backend_ecr }}:$GITHUB_SHA
-      - name: Init EKS
-        run: |
-          cd k8s/
-          aws eks update-kubeconfig --name ${{ env.cluster_name }} --region ${{ env.region }}
-      - name: Encode config
-        run: |
-          base64_encoded = cat $HOME/.kube/config | base64
-          echo "KUBE_CONFIG_DATA=$base64_encoded" >> $GITHUB_ENV
-      - name: deploy to cluster
+      # - name: Init EKS
+      #   run: |
+      #     cd k8s/
+      #     aws eks update-kubeconfig --name ${{ env.cluster_name }} --region ${{ env.region }}
+      # - name: Encode config
+      #   run: |
+      #     base64_encoded = cat $HOME/.kube/config | base64
+      #     echo "KUBE_CONFIG_DATA=$base64_encoded" >> $GITHUB_ENV
+      - name: Deploy to EKS
         uses: kodermax/kubectl-aws-eks@main
         with:
           args: set image backend=${{ env.backend_ecr }}:$GITHUB_SHA
         env:
-          KUBE_CONFIG_DATA: $KUBE_CONFIG_DATA
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA}}
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ env.backend_ecr }}
           IMAGE_TAG: $GITHUB_SHA

@@ -44,34 +44,6 @@ jobs:
           aws-region: ${{ env.region }}
           # role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           # role-session-name: githubci-${{ github.sha }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-            terraform_version: "1.4.5"
-      - name: Terraform Initialize
-        run: terraform init
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Validate
-        run: terraform validate 
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Plan
-        run: terraform plan
-        working-directory: 'setup/terraform'
-
-      - name: Terraform Apply
-        run: |
-          export TF_LOG=DEBUG
-          terraform apply -auto-approve
-        working-directory: 'setup/terraform'
-      - name: Set Terraform Outputs to ENV
-        run: |
-          echo "cluster_name=$(terraform output -raw cluster_name)" >> $GITHUB_ENV
-          echo "frontend_ecr=$(terraform output -raw frontend_ecr)" >> $GITHUB_ENV
-        working-directory: 'setup/terraform'
-
       - name: Setup kubectl 
         uses: azure/setup-kubectl@v3
         # with:
@@ -98,9 +70,3 @@ jobs:
           aws eks update-kubeconfig --name $cluster_name --region ${{ env.region }}
           kustomize edit set image frontend=$frontend_ecr:$GITHUB_SHA
           kustomize build | kubectl apply -f -
-      # - name: Kube Auth
-      #   run: ./init.sh
-      - name: Destroy Terraform resources
-        if: ${{ failure() }}
-        run: terraform destroy -auto-approve
-        working-directory: 'setup/terraform'

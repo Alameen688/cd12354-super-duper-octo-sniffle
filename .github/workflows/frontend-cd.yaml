@@ -66,6 +66,7 @@ jobs:
           export TF_LOG=DEBUG
           terraform apply -auto-approve
         working-directory: 'setup/terraform'
+        continue-on-error: true
 
       - name: Setup kubectl 
         uses: azure/setup-kubectl@v3

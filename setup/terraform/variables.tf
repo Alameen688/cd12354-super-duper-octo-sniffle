@@ -9,7 +9,7 @@ variable "enable_private" {
 variable "public_az" {
   type        = string
   description = "Change this to a letter a-f only if you encounter an error during setup"
-  default     = "ab"
+  default     = "a"
 }
 
 variable "private_az" {
